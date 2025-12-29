@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | InstaBioMaster</title>
+    <meta name="description" content="Learn about the team behind InstaBioMaster and our mission to help creators stand out.">
+    <!-- Reuse CSS from index.html for consistency -->
+    <style>
+        /* [Insert CSS from index.html here in production] - Simplified for brevity */
+        :root { --primary-color: #4F46E5; --text-dark: #1f2937; --bg-light: #f9fafb; --white: #fff; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-light); color: var(--text-dark); margin: 0; padding: 0; }
+        .navbar { max-width: 1200px; margin: 0 auto; padding: 1rem 2rem; display: flex; justify-content: space-between; }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary-color); text-decoration: none; }
+        .container { max-width: 800px; margin: 0 auto; padding: 4rem 2rem; }
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-color); }
+        p { line-height: 1.8; color: #4b5563; margin-bottom: 1.5rem; }
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin-top: 3rem; }
+        .team-card { background: white; padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .team-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem; }
+        footer { background: #1f2937; color: white; padding: 2rem; text-align: center; margin-top: 4rem; }
+    </style>
+</head>
+<body>
+
+    <header style="background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <nav class="navbar">
+            <a href="index.html" class="logo">InstaBioMaster</a>
+            <div>
+                <a href="index.html" style="margin-right: 20px; text-decoration:none; color:#333;">Home</a>
+                <a href="contact.html" style="text-decoration:none; color:#333;">Contact</a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>Our Mission</h1>
+        <p>At InstaBioMaster, we believe that your digital introduction is everything. In a world where attention spans are less than 8 seconds, your Instagram bio is the most valuable real estate you own.</p>
+        <p>Founded in 2024, our goal was simple: stop the "writer's block" that happens when you try to describe yourself. We use advanced algorithms and creative templates to help influencers, brands, and students express themselves perfectly.</p>
+
+        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80" style="width:100%; border-radius:12px; margin: 2rem 0;" alt="Team working">
+
+        <h2>Meet the Team</h2>
+        <div class="team-grid">
+            <div class="team-card">
+                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80" alt="CEO" class="team-img">
+                <h3>Alex Johnson</h3>
+                <p style="font-size:0.9rem;">Founder & CEO</p>
+            </div>
+            <div class="team-card">
+                <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=150&q=80" alt="CMO" class="team-img">
+                <h3>Sarah Lee</h3>
+                <p style="font-size:0.9rem;">Head of Marketing</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 InstaBioMaster. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
