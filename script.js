@@ -45,22 +45,25 @@ document.addEventListener('DOMContentLoaded', () => {
             4. Formatting: Return ONLY the 3 bios separated by the delimiter "|||". Do not include introductory text like "Here are your bios".
         `;
 
-        // FIXED: Use 'gemini-1.5-flash-latest' which is more stable on v1beta free tier
-        // If this fails, the code below will auto-switch to 'gemini-pro'
-        let modelName = "gemini-1.5-flash-latest";
+        // UPDATED: Switched to 'gemini-1.5-pro' (The most capable model currently available)
+        // If this still fails, we fall back to 'gemini-pro' (v1.0)
+        let modelName = "gemini-1.5-pro";
         let url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
 
         try {
+            console.log(`Attempting to connect to: ${modelName}...`);
+            
             let response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
             });
 
-            // FALLBACK LOGIC: If 1.5-flash is not found (404) or fails, try gemini-pro
+            // FALLBACK LOGIC: If Gemini 1.5 Pro fails, try Gemini 1.0 Pro
             if (!response.ok) {
-                console.warn(`Primary model ${modelName} failed. Trying fallback model...`);
-                modelName = "gemini-pro";
+                console.warn(`Primary model ${modelName} failed (${response.status}). Switching to backup model...`);
+                
+                modelName = "gemini-pro"; // Fallback to v1.0 Pro (very stable)
                 url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
                 
                 response = await fetch(url, {
@@ -88,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Gemini Error:", error);
-            return [`Error: ${error.message}. Check your internet connection.`];
+            return [`Error: ${error.message}. Please check your API key.`];
         }
     }
 
@@ -113,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-8 text-slate-400">
                     <span class="material-symbols-outlined animate-spin text-3xl mb-2">auto_mode</span>
-                    <p>Connecting to AI...</p>
+                    <p>Connecting to Gemini 1.5 Pro...</p>
                 </div>
             `;
 
