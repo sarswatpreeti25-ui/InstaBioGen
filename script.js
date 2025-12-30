@@ -1,4 +1,4 @@
-/* script.js - InstaGen AI with Gemini Integration */
+/* script.js - InstaGen AI (Safe Mode) */
 
 // ==========================================
 // ⚠️ SECURITY WARNING:
@@ -42,45 +42,28 @@ document.addEventListener('DOMContentLoaded', () => {
             1. Use relevant emojis.
             2. Keep it under 150 characters per bio.
             3. Include a call to action if appropriate.
-            4. Formatting: Return ONLY the 3 bios separated by the delimiter "|||". Do not include introductory text like "Here are your bios".
+            4. Formatting: Return ONLY the 3 bios separated by the delimiter "|||". Do not include introductory text.
         `;
 
-        // UPDATED: Switched to 'gemini-1.5-pro' (The most capable model currently available)
-        // If this still fails, we fall back to 'gemini-pro' (v1.0)
-        let modelName = "gemini-1.5-pro";
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
+        // FIXED: Using "gemini-pro" is the safest, most compatible option for all keys.
+        const modelName = "gemini-pro";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
 
         try {
-            console.log(`Attempting to connect to: ${modelName}...`);
-            
-            let response = await fetch(url, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
             });
 
-            // FALLBACK LOGIC: If Gemini 1.5 Pro fails, try Gemini 1.0 Pro
             if (!response.ok) {
-                console.warn(`Primary model ${modelName} failed (${response.status}). Switching to backup model...`);
-                
-                modelName = "gemini-pro"; // Fallback to v1.0 Pro (very stable)
-                url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
-                
-                response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error.message || `API Error: ${response.status}`);
-                }
+                const errorData = await response.json();
+                // This will show a popup alert with the EXACT error message from Google
+                throw new Error(errorData.error.message || `API Error: ${response.status}`);
             }
             
             const data = await response.json();
             
-            // Safety check
             if (!data.candidates || data.candidates.length === 0) {
                 return ["AI couldn't generate a response. Please try a different description."];
             }
@@ -91,7 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Gemini Error:", error);
-            return [`Error: ${error.message}. Please check your API key.`];
+            alert(`Error: ${error.message}`); // Popup so you can see exactly what's wrong
+            return [];
         }
     }
 
@@ -102,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Validation
             const desc = descriptionInput.value.trim();
             if (!desc) {
-                alert("Please describe your page first! (e.g., 'I post travel photos from Bali')");
+                alert("Please describe your page first!");
                 descriptionInput.focus();
                 return;
             }
@@ -116,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-8 text-slate-400">
                     <span class="material-symbols-outlined animate-spin text-3xl mb-2">auto_mode</span>
-                    <p>Connecting to Gemini 1.5 Pro...</p>
+                    <p>Connecting to AI...</p>
                 </div>
             `;
 
@@ -133,6 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if(previewCategory) previewCategory.innerText = categorySelect.options[categorySelect.selectedIndex].text;
 
             // 6. Render Results
+            if (generatedBios.length === 0) {
+                 resultContainer.innerHTML = `<div class="text-center text-red-500 p-4">Failed to generate. Please check the alert popup for details.</div>`;
+                 return;
+            }
+
             generatedBios.forEach((bio, index) => {
                 const card = document.createElement('div');
                 card.className = "group relative bg-white border-2 border-slate-100 hover:border-primary rounded-xl p-5 transition-all shadow-sm hover:shadow-md cursor-pointer animate-fade-in-up";
@@ -147,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
 
-                // Update Preview on Click
+                // Update Preview
                 card.addEventListener('click', () => {
                     if(previewBio) previewBio.innerText = bio;
                     document.querySelectorAll('#resultsContainer > div').forEach(d => {
@@ -156,18 +145,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     card.classList.add('border-primary', 'bg-purple-50', 'ring-2', 'ring-purple-100');
                 });
 
-                // Copy Logic
+                // Copy
                 const copyBtn = card.querySelector('button');
                 copyBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     navigator.clipboard.writeText(bio).then(() => {
-                        const icon = copyBtn.querySelector('span');
-                        icon.innerText = 'check';
-                        icon.classList.add('text-green-500');
-                        setTimeout(() => {
-                            icon.innerText = 'content_copy';
-                            icon.classList.remove('text-green-500');
-                        }, 2000);
+                        alert("Copied to clipboard!");
                     });
                 });
 
