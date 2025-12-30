@@ -1,111 +1,170 @@
-/* script.js - Updated for Tailwind Design */
+/* script.js - InstaGen AI with Gemini Integration */
+
+// ==========================================
+// ⚠️ SECURITY WARNING:
+// You have hardcoded your API key below. 
+// Do not commit this file to GitHub/GitLab public repos.
+// ==========================================
+
+const API_KEY = "AIzaSyBgDVVkZy5XfARj0gGMOQEA6p3Yh0nK6wI"; 
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- 1. Mobile Menu Toggle ---
-    const mobileBtn = document.getElementById('mobileMenuBtn');
-    const mobileMenu = document.getElementById('mobileMenu');
-
-    if(mobileBtn && mobileMenu) {
-        mobileBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-    }
-
-    // --- 2. Bio Generator Data & Logic ---
+    // --- Elements ---
     const generateBtn = document.getElementById('generateBtn');
     const resultContainer = document.getElementById('resultsContainer');
+    const descriptionInput = document.getElementById('description');
+    const categorySelect = document.getElementById('category');
+    const toneSelect = document.getElementById('tone');
+    
+    // Preview Elements
+    const previewBio = document.getElementById('previewBio');
+    const previewCategory = document.getElementById('previewCategory');
+    const previewHandle = document.getElementById('previewHandle');
+    const previewName = document.getElementById('previewName');
 
-    const bioDatabase = {
-        fashion: {
-            professional: [
-                "Fashion Stylist | NYC 🗽\nHelping you look your best.\nDM for collaborations 📩",
-                "Sustainable Fashion Advocate 🌿\nStyle without compromise.\nShop my closet below 👇"
-            ],
-            witty: [
-                "I have enough clothes. \n- Said no woman ever. 👗",
-                "Shopping is my cardio. 🛍️\nFashion addict & coffee lover."
-            ],
-            minimal: [
-                "Style. Grace. Fashion.",
-                "NYC | LA | MIA"
-            ],
-            bold: [
-                "Born to stand out.",
-                "Not your average stylist."
-            ]
-        },
-        tech: {
-            professional: [
-                "Software Engineer 💻\nBuilding the future of web.\nCheck out my portfolio 👇",
-                "Tech Reviewer 📱\nUnboxing the latest gadgets."
-            ],
-            witty: [
-                "I turn coffee into code. ☕ -> 💻",
-                "My computer is faster than yours."
-            ],
-            bold: [
-                "Disrupting the industry.",
-                "Innovate or die."
-            ]
-        }
-        // Add more categories here as needed
-    };
-
-    if (generateBtn && resultContainer) {
-        generateBtn.addEventListener('click', () => {
-            const category = document.getElementById('category').value;
-            const tone = document.getElementById('tone').value;
-
-            // Simple loading effect
-            generateBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Generating...';
+    // --- Gemini API Function ---
+    async function generateBios(description, category, tone) {
+        
+        // Construct the Prompt for Gemini
+        const promptText = `
+            Act as a social media expert. Write 3 distinct, engaging Instagram bios for a "${category}" account.
+            Tone: ${tone}.
+            User's specific details: "${description}".
             
-            setTimeout(() => {
-                // Get data or fallback
-                const catData = bioDatabase[category] || bioDatabase['fashion'];
-                const toneData = catData[tone] || catData['professional'] || ["Bio ideas coming soon!"];
+            Requirements:
+            1. Use relevant emojis.
+            2. Keep it under 150 characters per bio.
+            3. Include a call to action if appropriate.
+            4. Formatting: Return ONLY the 3 bios separated by the delimiter "|||". Do not include introductory text like "Here are your bios".
+        `;
 
-                // Clear previous results
-                resultContainer.innerHTML = '';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
-                toneData.forEach((bio) => {
-                    // Create Result Card HTML (Tailwind styled)
-                    const card = document.createElement('div');
-                    card.className = "group relative bg-white border-2 border-slate-100 hover:border-primary/30 rounded-2xl p-6 transition-all hover:shadow-lg flex flex-col sm:flex-row justify-between items-start gap-4 animate-fade-in-up";
-                    
-                    card.innerHTML = `
-                        <div class="space-y-2 w-full">
-                            <p class="text-slate-800 text-lg font-medium leading-relaxed whitespace-pre-line">${bio}</p>
-                            <div class="flex flex-wrap gap-2 pt-2">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-purple-50 text-purple-700 uppercase">${category}</span>
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 uppercase">${tone}</span>
-                            </div>
-                        </div>
-                        <button class="flex-shrink-0 p-3 text-slate-400 hover:text-white hover:bg-primary rounded-xl transition-all shadow-sm copy-btn" title="Copy to clipboard">
-                            <span class="material-symbols-outlined">content_copy</span>
-                        </button>
-                    `;
-                    
-                    // Add Copy Functionality
-                    const copyBtn = card.querySelector('.copy-btn');
-                    copyBtn.addEventListener('click', () => {
-                        navigator.clipboard.writeText(bio).then(() => {
-                            copyBtn.innerHTML = '<span class="material-symbols-outlined">check</span>';
-                            copyBtn.classList.add('bg-green-500', 'text-white');
-                            setTimeout(() => {
-                                copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
-                                copyBtn.classList.remove('bg-green-500', 'text-white');
-                            }, 2000);
-                        });
-                    });
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }]
+                })
+            });
 
-                    resultContainer.appendChild(card);
-                });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error.message || `API Error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Safety check: Did we get a valid candidate?
+            if (!data.candidates || data.candidates.length === 0) {
+                return ["AI couldn't generate a response. Please try a different description."];
+            }
 
-                // Reset Button
-                generateBtn.innerHTML = '<span class="material-symbols-outlined">bolt</span> Generate Magic';
-            }, 800); // 800ms simulated delay
-        });
+            const rawText = data.candidates[0].content.parts[0].text;
+            
+            // Split by the delimiter we requested (|||)
+            const bios = rawText.split('|||').map(b => b.trim()).filter(b => b.length > 0);
+            return bios;
+
+        } catch (error) {
+            console.error("Gemini Error:", error);
+            return [`Error: ${error.message}. Please check your internet or API key.`];
+        }
     }
 
+    // --- Event Listener ---
+    if (generateBtn) {
+        generateBtn.addEventListener('click', async () => {
+            
+            // 1. Validation
+            const desc = descriptionInput.value.trim();
+            if (!desc) {
+                alert("Please describe your page first! (e.g., 'I post travel photos from Bali')");
+                descriptionInput.focus();
+                return;
+            }
+
+            // 2. UI Loading State
+            const originalBtnText = generateBtn.innerHTML;
+            generateBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Thinking...';
+            generateBtn.disabled = true;
+            generateBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            
+            // Show loading placeholder in results
+            resultContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-8 text-slate-400">
+                    <span class="material-symbols-outlined animate-spin text-3xl mb-2">auto_mode</span>
+                    <p>Connecting to Google Gemini...</p>
+                </div>
+            `;
+
+            // 3. Call API
+            const generatedBios = await generateBios(desc, categorySelect.value, toneSelect.value);
+
+            // 4. Clear Loading & Reset Button
+            resultContainer.innerHTML = '';
+            generateBtn.innerHTML = originalBtnText;
+            generateBtn.disabled = false;
+            generateBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+
+            // 5. Update Phone Preview Metadata
+            previewCategory.innerText = categorySelect.options[categorySelect.selectedIndex].text;
+
+            // 6. Render Results
+            generatedBios.forEach((bio, index) => {
+                // Create Card
+                const card = document.createElement('div');
+                card.className = "group relative bg-white border-2 border-slate-100 hover:border-primary rounded-xl p-5 transition-all shadow-sm hover:shadow-md cursor-pointer animate-fade-in-up";
+                // Stagger animation
+                card.style.animationDelay = `${index * 150}ms`;
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-4">
+                        <p class="text-slate-800 text-base font-medium leading-relaxed whitespace-pre-line flex-1">${bio}</p>
+                        <button class="text-slate-400 hover:text-primary transition-colors p-2 rounded-full hover:bg-purple-50" title="Copy Bio">
+                            <span class="material-symbols-outlined text-xl">content_copy</span>
+                        </button>
+                    </div>
+                `;
+
+                // --- Click Card to Update Preview ---
+                card.addEventListener('click', () => {
+                    // Update text in phone mockup
+                    previewBio.innerText = bio;
+                    
+                    // Visual feedback on selected card
+                    document.querySelectorAll('#resultsContainer > div').forEach(d => {
+                        d.classList.remove('border-primary', 'bg-purple-50', 'ring-2', 'ring-purple-100');
+                    });
+                    card.classList.add('border-primary', 'bg-purple-50', 'ring-2', 'ring-purple-100');
+                });
+
+                // --- Copy Button Logic ---
+                const copyBtn = card.querySelector('button');
+                copyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Stop the card click event
+                    navigator.clipboard.writeText(bio).then(() => {
+                        // Change icon temporarily
+                        const icon = copyBtn.querySelector('span');
+                        icon.innerText = 'check';
+                        icon.classList.add('text-green-500');
+                        setTimeout(() => {
+                            icon.innerText = 'content_copy';
+                            icon.classList.remove('text-green-500');
+                        }, 2000);
+                    });
+                });
+
+                resultContainer.appendChild(card);
+                
+                // Automatically preview the first result
+                if (index === 0) {
+                    previewBio.innerText = bio;
+                    card.classList.add('border-primary', 'bg-purple-50', 'ring-2', 'ring-purple-100');
+                }
+            });
+        });
+    }
 });
