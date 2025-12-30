@@ -20,13 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Preview Elements
     const previewBio = document.getElementById('previewBio');
     const previewCategory = document.getElementById('previewCategory');
-    const previewHandle = document.getElementById('previewHandle');
-    const previewName = document.getElementById('previewName');
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    // --- Mobile Menu Toggle ---
+    if(mobileBtn && mobileMenu) {
+        mobileBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
 
     // --- Gemini API Function ---
     async function generateBios(description, category, tone) {
         
-        // Construct the Prompt for Gemini
         const promptText = `
             Act as a social media expert. Write 3 distinct, engaging Instagram bios for a "${category}" account.
             Tone: ${tone}.
@@ -39,38 +45,50 @@ document.addEventListener('DOMContentLoaded', () => {
             4. Formatting: Return ONLY the 3 bios separated by the delimiter "|||". Do not include introductory text like "Here are your bios".
         `;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        // FIXED: Use 'gemini-1.5-flash-latest' which is more stable on v1beta free tier
+        // If this fails, the code below will auto-switch to 'gemini-pro'
+        let modelName = "gemini-1.5-flash-latest";
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
 
         try {
-            const response = await fetch(url, {
+            let response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: promptText }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
             });
 
+            // FALLBACK LOGIC: If 1.5-flash is not found (404) or fails, try gemini-pro
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error.message || `API Error: ${response.status}`);
+                console.warn(`Primary model ${modelName} failed. Trying fallback model...`);
+                modelName = "gemini-pro";
+                url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
+                
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error.message || `API Error: ${response.status}`);
+                }
             }
             
             const data = await response.json();
             
-            // Safety check: Did we get a valid candidate?
+            // Safety check
             if (!data.candidates || data.candidates.length === 0) {
                 return ["AI couldn't generate a response. Please try a different description."];
             }
 
             const rawText = data.candidates[0].content.parts[0].text;
-            
-            // Split by the delimiter we requested (|||)
             const bios = rawText.split('|||').map(b => b.trim()).filter(b => b.length > 0);
             return bios;
 
         } catch (error) {
             console.error("Gemini Error:", error);
-            return [`Error: ${error.message}. Please check your internet or API key.`];
+            return [`Error: ${error.message}. Check your internet connection.`];
         }
     }
 
@@ -92,32 +110,29 @@ document.addEventListener('DOMContentLoaded', () => {
             generateBtn.disabled = true;
             generateBtn.classList.add('opacity-75', 'cursor-not-allowed');
             
-            // Show loading placeholder in results
             resultContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-8 text-slate-400">
                     <span class="material-symbols-outlined animate-spin text-3xl mb-2">auto_mode</span>
-                    <p>Connecting to Google Gemini...</p>
+                    <p>Connecting to AI...</p>
                 </div>
             `;
 
             // 3. Call API
             const generatedBios = await generateBios(desc, categorySelect.value, toneSelect.value);
 
-            // 4. Clear Loading & Reset Button
+            // 4. Clear Loading & Reset
             resultContainer.innerHTML = '';
             generateBtn.innerHTML = originalBtnText;
             generateBtn.disabled = false;
             generateBtn.classList.remove('opacity-75', 'cursor-not-allowed');
 
-            // 5. Update Phone Preview Metadata
-            previewCategory.innerText = categorySelect.options[categorySelect.selectedIndex].text;
+            // 5. Update Preview Meta
+            if(previewCategory) previewCategory.innerText = categorySelect.options[categorySelect.selectedIndex].text;
 
             // 6. Render Results
             generatedBios.forEach((bio, index) => {
-                // Create Card
                 const card = document.createElement('div');
                 card.className = "group relative bg-white border-2 border-slate-100 hover:border-primary rounded-xl p-5 transition-all shadow-sm hover:shadow-md cursor-pointer animate-fade-in-up";
-                // Stagger animation
                 card.style.animationDelay = `${index * 150}ms`;
                 
                 card.innerHTML = `
@@ -129,24 +144,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
 
-                // --- Click Card to Update Preview ---
+                // Update Preview on Click
                 card.addEventListener('click', () => {
-                    // Update text in phone mockup
-                    previewBio.innerText = bio;
-                    
-                    // Visual feedback on selected card
+                    if(previewBio) previewBio.innerText = bio;
                     document.querySelectorAll('#resultsContainer > div').forEach(d => {
                         d.classList.remove('border-primary', 'bg-purple-50', 'ring-2', 'ring-purple-100');
                     });
                     card.classList.add('border-primary', 'bg-purple-50', 'ring-2', 'ring-purple-100');
                 });
 
-                // --- Copy Button Logic ---
+                // Copy Logic
                 const copyBtn = card.querySelector('button');
                 copyBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Stop the card click event
+                    e.stopPropagation();
                     navigator.clipboard.writeText(bio).then(() => {
-                        // Change icon temporarily
                         const icon = copyBtn.querySelector('span');
                         icon.innerText = 'check';
                         icon.classList.add('text-green-500');
@@ -159,8 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 resultContainer.appendChild(card);
                 
-                // Automatically preview the first result
-                if (index === 0) {
+                if (index === 0 && previewBio) {
                     previewBio.innerText = bio;
                     card.classList.add('border-primary', 'bg-purple-50', 'ring-2', 'ring-purple-100');
                 }
